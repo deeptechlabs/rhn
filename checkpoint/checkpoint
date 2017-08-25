@@ -1,0 +1,2 @@
+model_checkpoint_path: "ptb_392189523_best_model.ckpt"
+all_model_checkpoint_paths: "ptb_392189523_best_model.ckpt"
