@@ -8,7 +8,6 @@ import numpy as np
 from tensorflow.python.ops import variable_scope as vs
 from tensorflow.python.ops import math_ops, array_ops
 from tensorflow.python.util import nest
-
 from rhncell import *
 
 RNNCell = tf.nn.rnn_cell.RNNCell
@@ -36,7 +35,7 @@ class Model(object):
     self._noise_h = tf.placeholder(tf.float32, [batch_size, size, num_layers])
     self._noise_o = tf.placeholder(tf.float32, [batch_size, 1, size])
 
-    with tf.device("/gpu:0"):
+    with tf.device("/cpu:0"):
       embedding = tf.get_variable("embedding", [vocab_size, in_size])
       inputs = tf.nn.embedding_lookup(embedding, self._input_data) * self._noise_x
 

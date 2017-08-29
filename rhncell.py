@@ -37,18 +37,36 @@ class RHNCell(RNNCell):
     current_state = state[0]
     noise_i = state[1]
     noise_h = state[2]
+
+    '''
+    inner loop of feature refinering
+    l=0 to l=4 starts here
+    the default settings using the hyperparameters is set with depth
+    depth = l = 4
+    '''
+    
     for i in range(self.depth):
       with tf.variable_scope('h_'+str(i)):
+        # modify this line to accomodate for the input cell
         if i == 0:
+        # the if else is the indicator function
+        # basically this is where h is computed based on the current state and the input state
           h = tf.tanh(linear([inputs * noise_i, current_state * noise_h], self._num_units, True))
         else:
+        # the if else is the indicator function
+        # basically this is where h is computed based on the current state
           h = tf.tanh(linear([current_state * noise_h], self._num_units, True))
       with tf.variable_scope('t_'+str(i)):
         if i == 0:
           t = tf.sigmoid(linear([inputs * noise_i, current_state * noise_h], self._num_units, True, self.forget_bias))
         else:
           t = tf.sigmoid(linear([current_state * noise_h], self._num_units, True, self.forget_bias))
-      current_state = (h - current_state)* t + current_state
+      # we start by modifying this part
+      # since we want to return the current state that would be 
+      if i == 0:
+        current_state = (h + current_state)
+      else:
+        current_state = (h - current_state)* t + current_state
 
     return current_state, [current_state, noise_i, noise_h]
 

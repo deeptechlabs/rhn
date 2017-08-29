@@ -16,9 +16,8 @@ import tensorflow as tf
 
 from copy import deepcopy
 from sacred import Experiment
-from rhn import Model
+from rhn_tf import Model
 from data.reader import data_iterator
-
 from rhncell import *
 
 ex = Experiment('rhn_prediction')
