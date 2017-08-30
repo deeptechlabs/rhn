@@ -50,26 +50,26 @@ class RHNCell(RNNCell):
         if i == 0:
         # the if else is the indicator function
         # basically this is where h is computed based on the current state and the input state
-          h = tf.tanh(linear([inputs * noise_i, current_state * noise_h], self._num_units, True))
+          h = tf.tanh(linear_inputcell([inputs * noise_i, current_state * noise_h], self._num_units, True))
         else:
         # the if else is the indicator function
         # basically this is where h is computed based on the current state
-          h = tf.tanh(linear([current_state * noise_h], self._num_units, False))
+          h = tf.tanh(linear_non_inputcell([current_state * noise_h], self._num_units, True))
       with tf.variable_scope('t_'+str(i)):
         if i == 0:
-          t = tf.sigmoid(linear([inputs * noise_i, current_state * noise_h], self._num_units, True, self.forget_bias))
-        else:
-          t = tf.sigmoid(linear([current_state * noise_h], self._num_units, True, self.forget_bias))
+          t = tf.sigmoid(linear_inputcell([inputs * noise_i, current_state * noise_h], self._num_units, True, self.forget_bias))
+        #else:
+          #t = tf.sigmoid(linear([current_state * noise_h], self._num_units, True, self.forget_bias))
       # we start by modifying this part
       # since we want to return the current state that would be 
       if i == 0:
-        current_state = (h - current_state)* t + current_state
-      else:
         current_state = (h + current_state)
+      else:
+        current_state = (h - current_state)* t + current_state
 
     return current_state, [current_state, noise_i, noise_h]
 
-def linear(args, output_size, bias, bias_start=None, scope=None):
+def linear_inputcell(args, output_size, bias, bias_start=None, scope=None):
   """
   This is a slightly modified version of _linear used by Tensorflow rnn.
   The only change is that we have allowed bias_start=None.
@@ -112,21 +112,22 @@ def linear(args, output_size, bias, bias_start=None, scope=None):
 
   # Now the computation.
   with vs.variable_scope(scope or "Linear"):
-    matrix = vs.get_variable(
-        "Matrix", [total_arg_size, output_size], dtype=dtype)
-    if len(args) == 1:
-      res = math_ops.matmul(args[0], matrix)
-    else:
-      res = math_ops.matmul(array_ops.concat(args, 1), matrix)
+    weights_input = vs.get_variable(
+        "weights_input", [total_arg_size, output_size], dtype=dtype)
+      
+    #res = math_ops.matmul(args[0], weights1)
+    #else:
+    
+    res_input = math_ops.matmul(array_ops.concat(args, 1), weights_input)
+    
     if not bias:
-      return res
+      return res_input
     elif bias_start is None:
-      bias_term = vs.get_variable("Bias", [output_size], dtype=dtype)
+      bias_input = vs.get_variable("Bias_input", [output_size], dtype=dtype)
     else:
-      bias_term = vs.get_variable("Bias", [output_size], dtype=dtype,
+      bias_input = vs.get_variable("Bias_input", [output_size], dtype=dtype,
                                   initializer=tf.constant_initializer(bias_start, dtype=dtype))
-  return res + bias_term
-
+  return res_input + bias_input
 
 def linear_non_inputcell(args, output_size, bias, bias_start=None, scope=None):
   """
@@ -175,25 +176,25 @@ def linear_non_inputcell(args, output_size, bias, bias_start=None, scope=None):
 
   # Now the computation.
   with vs.variable_scope(scope or "Linear"):
-    weights = vs.get_variable(
-                                "Matrix", 
+    weights_noninput = vs.get_variable(
+                                "weights_noninput", 
                                 [total_arg_size, output_size], 
                                 dtype=dtype)
     
     # this is a dot product operation
     #  args[0] is the input vector
     
-    res_h = math_ops.matmul(args[0], weights)
+    res_noninput = math_ops.matmul(args[0], weights_noninput)
     
     if not bias:
-      return res_h
+      return res_noninput
     elif bias_start is None:
-      bias_term_r = vs.get_variable("Bias", 
+      bias_term_noninput = vs.get_variable("bias_noninput", 
                                 [output_size], 
                                 dtype=dtype)
     else:
-      bias_term_r = vs.get_variable("Bias", 
+      bias_term_noninput = vs.get_variable("bias_noninput", 
                                 [output_size], 
                                 dtype=dtype,
                                 initializer=tf.constant_initializer(bias_start, dtype=dtype))
-  return res_h + bias_term_r
+  return res_noninput + bias_term_noninput
